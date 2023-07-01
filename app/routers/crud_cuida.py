@@ -13,7 +13,7 @@ from utils.operations import sum_date_secods
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 logging.basicConfig()
-logging.getLogger('sqlalchemy.engine').setLevel(logging.ERROR)
+logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 router = APIRouter()
 
 
@@ -31,11 +31,11 @@ async def get_proffesionales_regions(id_region: int):
 async def get_turns_regions(date: str, id_region: int, id_schedule_shift: int):
     with engine.connect() as conn:
         result = conn.execute(
-            f"SELECT * from public.get_turno_regional_horario('{date}', {id_region}, {id_schedule_shift})"
+            f"SELECT * from  public.get_turno_regional_horario('{date}', {id_region}, {id_schedule_shift})"
         )
         shifts = result.fetchall()
         if shifts is None:
-            return {"error": "User not found"}
+            return {"error": "turno not found"}
     return jsonable_encoder(shifts)
 
 
@@ -153,7 +153,7 @@ async def desagendar_turno_completo (fecha_turno:str):
     return "se ha desagendado todo"
 
 @router.get("/citas/reprogramar")
-async def reprogramar_hora_cita(id_cita:str,fecha_programada:str, nueva_hora: str):
+async def reprogramar_hora_cita(id_cita:str, fecha_programada:str, nueva_hora: str):
     with engine.connect() as conn:
         conn.execute(
             "UPDATE "
@@ -172,6 +172,11 @@ def consultar_citas_para_desplazamientos(datos_turno_profesionales):
     id_profesionales = []
     for c in datos_turno_profesionales:
         id_profesionales.append(c['id_profesional'])
+        with engine.connect() as conn:
+             conn.execute(
+                f"DELETE FROM desplazamiento WHERE id_profesional= '{c['id_profesional']}';"
+            )
+
 
     id_profesionales = list(set(id_profesionales))
     fecha_turno = datos_turno_profesionales[0]['fecha_turno']
@@ -186,6 +191,7 @@ def consultar_citas_para_desplazamientos(datos_turno_profesionales):
         consulta_ubicaciones_citas = jsonable_encoder(result.fetchall())
         registro_profesional = {}
         desplazamiento_profesional = []
+
         for i in range(len(consulta_ubicaciones_citas) - 1):
             desplazamiento = calcular_tiempo_desplazamiento(
                 (consulta_ubicaciones_citas[i]["latitud"], consulta_ubicaciones_citas[i]["longitud"]),
@@ -199,14 +205,12 @@ def consultar_citas_para_desplazamientos(datos_turno_profesionales):
             registro_desplazamiento['duracion_seg'] = desplazamiento
             registro_desplazamiento['holgura_seg'] = 1200
             registro_desplazamiento['id_estado'] = 1
-
-            registro_profesional['id_profesional'] = str(p)
             desplazamiento_profesional.append(registro_desplazamiento)
 
-            registro_profesional['desplazamientos'] = desplazamiento_profesional
+        registro_profesional['id_profesional'] = str(p)
+        registro_profesional['desplazamientos'] = desplazamiento_profesional
 
         desplazamientos_profesional_turno.append(registro_profesional)
-
     return jsonable_encoder(desplazamientos_profesional_turno)
 
 
