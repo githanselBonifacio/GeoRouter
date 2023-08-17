@@ -3,14 +3,13 @@ from datetime import datetime
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from routers import genetic, crud_cuida
+from routers import genetic
 
 app = FastAPI()
 app.title = "Geo router api"
 app.version = "0.0.1"
 
 app.include_router(genetic.router)
-app.include_router(crud_cuida.router)
 origins = [
     "http://localhost",
     "http://localhost:4200",
@@ -24,6 +23,6 @@ app.add_middleware(
 )
 
 
-@app.get('/', tags=["Test Api"])
+@app.get('/test', tags=["Test Api"])
 def test():
     return "test api routerGeo"+str(datetime.now())

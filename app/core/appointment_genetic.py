@@ -64,16 +64,17 @@ class AppointmentGenenetic:
 
                 check_travel = self.check_travel_time(
                     group[g].id_appointment,
-                    group[g+1].id_appointment
+                    group[g + 1].id_appointment
                 )
+
                 if check_travel is None:
                     travel_time = calculate_travel_time(
                         group[g].latitude, group[g].longitude, group[g + 1].latitude, group[g + 1].longitude)
                     self.displacements.append({
                         "pos1": group[g].id_appointment,
                         "pos2": group[g + 1].id_appointment,
-                        "time": travel_time
-                        })
+                        "time": round(travel_time)
+                    })
                 else:
                     travel_time = copy.deepcopy(check_travel)
 
@@ -127,6 +128,7 @@ class AppointmentGenenetic:
 
         for sublist in results_appointment:
             corr = self.find_coordinates_negative_slack(sublist[2], ic=random.randint(0, 1))
+
             if len(corr) == 0:
                 return np.empty(0)
             slacks_coor.append(corr)
@@ -154,7 +156,6 @@ class AppointmentGenenetic:
 
         for g in range(self.number_generations):
             self.calculate_population_fitness(func_calculate_time=calculate_time)
-
             self.actual_population = self.select_parents()
 
             next_generation_parents = self.mutate()
@@ -174,4 +175,16 @@ class AppointmentGenenetic:
         scheduled, no_scheduled = delete_elements(best_order_appointments[1], negative_slack_appointment_coordinates)
         best_solution['scheduled'] = scheduled
         best_solution['no_scheduled'] = no_scheduled
+        displacements_solution = []
+        for grup_appointment in scheduled:
+            for j in range(len(grup_appointment)):
+                if j + 1 < len(grup_appointment):
+
+                    displacements_solution.extend(
+                        [diccionario for diccionario in self.displacements if
+                         diccionario["pos1"] == grup_appointment[j].id_appointment and
+                         diccionario["pos2"] == grup_appointment[j + 1].id_appointment])
+
+        best_solution['displacements'] = displacements_solution
+
         return best_solution

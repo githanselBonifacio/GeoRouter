@@ -31,7 +31,7 @@ async def order_appointments_slack(request: Request):
                          duration=data["origin"]["duration"],
                          slack=data["origin"]["slack"],
                          date=datetime.timestamp(
-                             datetime.strptime(data["origin"]["date"], "%d-%m-%Y %H:%M"))
+                             datetime.strptime(data["origin"]["date"], "%Y-%m-%d %H:%M"))
                          )
 
     number_generations = 500
